@@ -42,26 +42,40 @@ public:
 
 auto x = R"---(
 
-Grammar = (Expression ";")? Expression Comment?
+Grammar = (Expression ";")* Expression? Comment? Output
 
-Expression = Throw Operator+
+Output =
+    | "\"" (OutputStr ComputedValue?)+ "\""
+    | EmptyOutput
+EmptyOutput = ""
+OutputStr = "([^\\$%]*(\\.)?)+"
+ComputedValue =
+    | PreviousResults
+    | PreviousDices
+    | GetResult
+    | GetDices
+GetResult = "$" FullExpression
+GetDices = "%" FullExpression
+
+FullExpression = "{" Expression "}"
+Expression = Roll Operator+
 
 Comment = ";?#" CommentStr
 CommentStr = ".*"
 
 Quantity =
-    | PreviousThrow
+    | PreviousResults
     | Number
 Number = "\d+"
 
-PreviousThrow = "$" Number
-PreviousResult = "%" Number
+PreviousResults = "$" Number
+PreviousDices = "!" Number
 
-Throw =
+Roll =
     | "(" (DiceOperator ",")* DiceOperator ")"
     | DiceOperator
 DiceOperator =
-    | PreviousResult
+    | PreviousDices
     | Dice
     | List
 
@@ -86,9 +100,7 @@ Operator =
     | If
     | Paint
 
-    | Print
-
-MathOperation = ArithmeticOperator Number
+MathOperation = ArithmeticOperator Quantity
 ArithmeticOperator =
     | Plus
     | Minus
@@ -96,15 +108,15 @@ ArithmeticOperator =
     | Multiply
     | Modulo
 
-Plus = "+" Number
-Minus = "-" Number
-Multiply = "[*×]" Number
-Modulo = "%" Number
-Divide = (DivideRound | DivideCeil | DivideFloor | DivideReal) Number
-DivideRound = "/~"
-DivideCeil = "/\+"
-DivideFloor = "/\-"
-DivideReal = "/"
+Plus = "+" Quantity
+Minus = "-" Quantity
+Multiply = "[*×]" Quantity
+Modulo = "%" Quantity
+Divide = DivideRound | DivideCeil | DivideFloor | DivideReal
+DivideRound = "/~" Quantity
+DivideCeil = "/\+" Quantity
+DivideFloor = "/\-" Quantity
+DivideReal = "/" Quantity
 
 KeepHigher = "K" Quantity
 KeepLower = "k" Quantity
@@ -116,46 +128,42 @@ AddIf = "a" Condition
 ExplodeIf = "e" Condition
 RerollIf = "r" Condition
 
-If = "i" (OnEach | OnAll | OnOne | OnTotal) Condition TrueInstruction ElseIfInstruction* ElseInstruction
+If = "i" (OnEach | OnAll | AtLeastOne | OnTotal) Condition TrueInstruction ElseIfInstruction* ElseInstruction
 
 OnEach = "\+?"
 OnAll = "\*"
-OnOne = "\."
+AtLeastOne = "\."
 OnTotal = ":"
 
-TrueInstruction = "{" Instruction "}"
-ElseIfInstruction = Condition "{" Instruction "}"
-ElseInstruction = "{" Instruction "}"
+TrueInstruction = FullExpression
+ElseIfInstruction = Condition FullExpression
+ElseInstruction = FullExpression
 
 Condition =
-    | Number
+    | Quantity
     | "\[" ListOperator* RelationalOperator "\]"
 
 ListOperator = RelationalOperator (And | Or)
 And = "&&?"
 Or = "||?"
 
-RelationalOperator = Superior | Inferior | SuperiorOrEqual | InferiorOrEqual | Equal | NotEqual
-Superior = ">" Number
-Inferior = "<" Number
-SuperiorOrEqual = ">=" Number
-InferiorOrEqual = "<=" Number
-Equal = "==?" Range
-NotEqual = "!=" Range
+RelationalOperator = Superior | Inferior | SuperiorOrEqual | InferiorOrEqual | Equal | NotEqual | Range
+Superior = ">" Quantity
+Inferior = "<" Quantity
+SuperiorOrEqual = ">=" Quantity
+InferiorOrEqual = "<=" Quantity
+Equal = "==?" Quantity
+NotEqual = "!=" Quantity
 
 Paint = "p\[" (Range ":")? Color
 
 Range = (SubRange ",")* SubRange
 SubRange =
     | MinOrMax
-    | Number
+    | Quantity
 MinOrMax = Min ":" Max
-Min = Number
-Max = Number
-
-Print = "\"" Output "\""
-Output = (OutputStr PreviousThrow?)+
-OutputStr = "([^\\$]*(\\.)?)+"
+Min = Quantity
+Max = Quantity
 
 )---";
 
