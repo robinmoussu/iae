@@ -40,6 +40,134 @@ public:
     }
 };
 
+auto x = R"---(
+
+Grammar = (Expression ";")? Expression Comment?
+
+Expression = Throw Operator+
+
+Comment = ";?#" CommentStr
+CommentStr = ".*"
+
+Quantity =
+    | PreviousThrow
+    | Number
+Number = "\d+"
+
+PreviousThrow = "$" Number
+PreviousResult = "%" Number
+
+Throw =
+    | "(" (DiceOperator ",")* DiceOperator ")"
+    | DiceOperator
+DiceOperator =
+    | PreviousResult
+    | Dice
+    | List
+
+Dice = Quantity "[dD]" NbFace
+NbFace = Quantity
+List = Quantity "[lL]" "\[" (Item ",")* Item "\]"
+Item = "\w+"
+
+Operator =
+    | KeepHigher
+    | KeepLower
+    | SortHigher
+    | SortLower
+
+    | MathOperation
+
+    | TakeIf
+    | AddIf
+    | ExplodeIf
+    | RerollIf
+
+    | If
+    | Paint
+
+    | Print
+
+MathOperation = ArithmeticOperator Number
+ArithmeticOperator =
+    | Plus
+    | Minus
+    | Divide
+    | Multiply
+    | Modulo
+
+Plus = "+" Number
+Minus = "-" Number
+Multiply = "[*×]" Number
+Modulo = "%" Number
+Divide = (DivideRound | DivideCeil | DivideFloor | DivideReal) Number
+DivideRound = "/~"
+DivideCeil = "/\+"
+DivideFloor = "/\-"
+DivideReal = "/"
+
+KeepHigher = "K" Quantity
+KeepLower = "k" Quantity
+SortHigher = "S" Quantity
+SortLower = "s" Quantity
+
+TakeIf = "t" Condition
+AddIf = "a" Condition
+ExplodeIf = "e" Condition
+RerollIf = "r" Condition
+
+If = "i" (OnEach | OnAll | OnOne | OnTotal) Condition TrueInstruction ElseIfInstruction* ElseInstruction
+
+OnEach = "\+?"
+OnAll = "\*"
+OnOne = "\."
+OnTotal = ":"
+
+TrueInstruction = "{" Instruction "}"
+ElseIfInstruction = Condition "{" Instruction "}"
+ElseInstruction = "{" Instruction "}"
+
+Condition =
+    | Number
+    | "\[" ListOperator* RelationalOperator "\]"
+
+ListOperator = RelationalOperator (And | Or)
+And = "&&?"
+Or = "||?"
+
+RelationalOperator = Superior | Inferior | SuperiorOrEqual | InferiorOrEqual | Equal | NotEqual
+Superior = ">" Number
+Inferior = "<" Number
+SuperiorOrEqual = ">=" Number
+InferiorOrEqual = "<=" Number
+Equal = "==?" Range
+NotEqual = "!=" Range
+
+Paint = "p\[" (Range ":")? Color
+
+Range = (SubRange ",")* SubRange
+SubRange =
+    | MinOrMax
+    | Number
+MinOrMax = Min ":" Max
+Min = Number
+Max = Number
+
+Print = "\"" Output "\""
+Output = (OutputStr PreviousThrow?)+
+OutputStr = "([^\\$]*(\\.)?)+"
+
+)---";
+
+// Keep and Explode not kept, since 1d10K5 is equivalent to 1d10e[=10]k5
+// Keep renamed TakeIf => "t"
+// Sort renamed SortHigher => "S"
+// added SortLower => "s"
+// Add renamed AddIf
+// BackwardJump and merge removed (replaced by %x and (%x, %y)
+// Don't know what Group means
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // TODO std::basic_string_view
