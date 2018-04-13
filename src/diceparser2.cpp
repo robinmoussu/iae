@@ -1,10 +1,16 @@
 #include <iostream> // TODO fmt
 #include <string>
+#include <array>
+#include <type_traits>
+#include <tuple>
+#include <any>
 #include <exception>
 #include <regex> // TODO boost
 //#include <string_view>
 
 using namespace std;
+
+namespace diceparser2 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,24 +27,6 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
-class Token {};
-
-class Expression: public Token, private vector<Token> {
-public:
-    void push_back (const Token& val) {
-        vector::push_back(val);
-    }
-};
-
-class Number: public Token {
-private:
-    std::string tok;
-public:
-    Number(const std::string& tok)
-        : tok(tok) {
-    }
-};
 
 auto x = R"---(
 
@@ -173,49 +161,120 @@ Max = Quantity
 // added SortLower => "s"
 // Add renamed AddIf
 // BackwardJump and merge removed (replaced by %x and (%x, %y)
-// Don't know what Group means
-
+// I don't know what Group means
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO std::basic_string_view
-Token tokenize(const std::string& in)
-{
-    auto ret = Expression{};
+/** Must match all tokens */
+template<class ...Tokens>
+struct AllOf { };
 
-    auto it = in.cbegin();
-    const auto end = in.cend();
+/** Return the first matching token */
+template<class ...Tokens>
+struct OneOf { };
 
-    do {
-        //smatch m;
-        //if(regex_match(it, end, m, regex("\\d\\+"))) {
-            //ret.push_back(Number(m[0]));
-        if(*it == '2') {
-            ret.push_back(Number("2"));
-            it += 1;
-        } else {
-            throw ParseError(string(it, end));
+/** Regex */
+template<const char* str>
+struct R { };
+
+////////////////////////////////////////////////////////////////////////////////
+
+const char number[] = "\\d+";
+struct Quantity: OneOf< /* PreviousResults, Not implemented yet */ R<number> > {};
+
+const char divide_round[] = "/~";
+const char divide_ceil[]  = "/\\+";
+const char divide_floor[] = "/\\-";
+const char divide_real[]  = "/";
+struct DivideRound: AllOf< R<divide_round>, Quantity > {};
+struct DivideCeil:  AllOf< R<divide_ceil>,  Quantity > {};
+struct DivideFloor: AllOf< R<divide_floor>, Quantity > {};
+struct DivideReal:  AllOf< R<divide_real>,  Quantity > {};
+
+const char plus[] = "\\+";
+const char minus[] = "-";
+const char multiply[] = "[*×]";
+const char modulo[] = "%";
+struct Plus:     AllOf< R<plus>,     Quantity > {};
+struct Minus:    AllOf< R<minus>,    Quantity > {};
+struct Multiply: AllOf< R<multiply>, Quantity > {};
+struct Modulo:   AllOf< R<modulo>,   Quantity > {};
+struct Divide:
+    OneOf<
+        DivideRound,
+        DivideCeil,
+        DivideFloor,
+        DivideReal
+    > {};
+
+struct ArithmeticOperator:
+    OneOf<
+        Plus,
+        Minus,
+        Divide,
+        Multiply,
+        Modulo
+    > {};
+struct MathOperation:
+    OneOf<
+        ArithmeticOperator,
+        Quantity
+    > {};
+
+////////////////////////////////////////////////////////////////////////////////
+
+auto is_valid(auto) {
+    return true;
+};
+
+template<class ...Tokens>
+auto compute(OneOf<Tokens...> tok) {
+    for (auto it: tok) {
+        if (is_valid(it)) {
+            return compute(it);
         }
-    }while(it != end);
-
-	return ret;
+    }
+    throw ParseError("in one of");
 }
 
-void compute(const Token& in)
-{
+template<class ...Tokens>
+auto compute(AllOf<Tokens...> tokens) {
+    for (auto t: tokens) {
+        if (!is_valid(t)) {
+            throw ParseError("in one of");
+        }
+    }
+    auto ret = string{};
+    for (auto t: tokens) {
+        ret += compute(t);
+    }
+    return ret;
+}
+
+template<const char* str>
+auto compute(R<str>) {
+    return str;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const auto test_me = string("2d3a[=3]*1;4d6;$2*10;($1d10 + %2a[>5])*100;\"$0: $1 [ %1 ]; $2 -> $3 [ %2 -> %3 ]; $4 [ %4 ] -- %0\"");
+constexpr auto test_me = "2d3a[=3]*1;4d6;$2*10;($1d10 + %2a[>5])*100;\"$0: $1 [ %1 ]; $2 -> $3 [ %2 -> %3 ]; $4 [ %4 ] -- %0\"";
+
+} // diceparser2
+
+using namespace diceparser2;
+
 int main(int argc, char *argv[])
 {
-	auto& out = cout;
-	auto& err = cerr;
+    auto& out = cout;
+    auto& err = cerr;
 
-	const auto input = test_me;
-    const auto token = tokenize(input);
-    compute(token);
+    const auto input = test_me;
+    // const auto token = tokenize(input);
+    // compute(token);
 
-	return 0;
+    // cout << compute(MathOperation{}) << endl;
+
+    return 0;
 }
+
