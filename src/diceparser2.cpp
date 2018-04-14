@@ -6,6 +6,10 @@
 #include <any>
 #include <exception>
 #include <regex> // TODO boost
+#include <memory>
+
+#include <cxxabi.h>
+
 //#include <string_view>
 
 using namespace std;
@@ -14,16 +18,29 @@ namespace diceparser2 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class ParseError: public std::exception 
+template<typename T>
+string print_type()
 {
-private:
-	const std::string description_;
-public:
-	ParseError(std::string description) : description_(description) {}
-	const char* what() const throw() override
-	{
-		return description_.c_str();
-	}
+    auto status = 0;
+    auto name = unique_ptr<char, decltype(std::free)*>{
+        abi::__cxa_demangle(typeid(T).name(), 0, 0, &status), std::free
+    };
+    if (status == 0) {
+        return name.release();
+    } else {
+        return typeid(T).name();
+    }
+}
+
+struct ParseErrorBase: public std::exception {};
+
+template<class T>
+struct ParseError: public ParseErrorBase
+{
+    const char* what() const throw() override
+    {
+        return (string{"Invalid token: "} + print_type<T>()).c_str();
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
