@@ -1,1 +1,1 @@
-exe{bin/diceparser2}: {cxx hxx}{**}
+exe{bin/rolling_dice}: {cxx hxx}{**}
