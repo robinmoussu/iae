@@ -79,14 +79,14 @@ Output =
     | "\"" (OutputStr ComputedValue?)+ "\""
     | EmptyOutput
 EmptyOutput = ""
-OutputStr = "([^\\$%]*(\\.)?)+"
+OutputStr = "([^\\$!]*(\\.)?)+"
 ComputedValue =
     | PreviousResults
     | PreviousDices
     | GetResult
     | GetDices
 GetResult = "$" FullExpression
-GetDices = "%" FullExpression
+GetDices = "!" FullExpression
 
 FullExpression = "{" Expression "}"
 Expression = Comment? Roll Operator+
@@ -144,7 +144,7 @@ ArithmeticOperator =
 Plus = "+" Quantity
 Minus = "-" Quantity
 Multiply = "[*×]" Quantity
-Modulo = "%" Quantity
+Modulo = "!" Quantity
 Divide = DivideRound | DivideCeil | DivideFloor | DivideReal
 DivideRound = "/~" Quantity
 DivideCeil = "/\+" Quantity
@@ -205,7 +205,7 @@ Max = Quantity
 // Sort renamed SortHigher => "S"
 // added SortLower => "s"
 // Add renamed AddIf
-// BackwardJump and merge removed (replaced by %x and (%x, %y)
+// BackwardJump and merge removed (replaced by !x and (!x, !y)
 // I don't know what Group means
 
 }; //namespace diceparser2
@@ -311,7 +311,7 @@ struct DivideReal:  AllOf< R<divide_real>,  Quantity > {};
 const char plus[] = "\\+";
 const char minus[] = "-";
 const char multiply[] = "[*×]";
-const char modulo[] = "%";
+const char modulo[] = "!";
 struct Plus:     AllOf< R<plus>,     Quantity > {};
 struct Minus:    AllOf< R<minus>,    Quantity > {};
 struct Multiply: AllOf< R<multiply>, Quantity > {};
@@ -344,7 +344,7 @@ struct MathOperation:
 
 using namespace diceparser2;
 
-constexpr auto test_me = "2d3a[=3]*1;4d6;$2*10;($1d10 + %2a[>5])*100;\"$0: $1 [ %1 ]; $2 -> $3 [ %2 -> %3 ]; $4 [ %4 ] -- %0\"";
+constexpr auto test_me = "2d3a[=3]*1;4d6;$2*10;($1d10 + !2a[>5])*100;\"$0: $1 [ !1 ]; $2 -> $3 [ !2 -> !3 ]; $4 [ !4 ] -- !0\"";
 
 const char a[] = "a";
 const char b[] = "b";
