@@ -220,7 +220,7 @@ using success_t = string;
 using error_t   = utility::ParseError;
 using output_t  = variant<success_t, grammar::error_t>;
 
-auto operator&& (output_t o1, output_t o2) {
+output_t operator&& (output_t o1, output_t o2) {
     return visit(overloaded {
         [](success_t s1, success_t s2) {
             return output_t{s1 + s2};
@@ -234,7 +234,7 @@ auto operator&& (output_t o1, output_t o2) {
     }, o1, o2);
 }
 
-auto operator|| (output_t o1, output_t o2) {
+output_t operator|| (output_t o1, output_t o2) {
     return visit(overloaded {
         [](success_t s, output_t) {
             return output_t{s};
