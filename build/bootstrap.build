@@ -1,4 +1,4 @@
-project = rolling_dice
+project = iae
 
 using config
 using test

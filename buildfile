@@ -1,1 +1,1 @@
-exe{bin/rolling_dice}: {cxx hxx}{**}
+exe{bin/iae}: {cxx hxx}{**}
