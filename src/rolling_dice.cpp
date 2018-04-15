@@ -1,66 +1,3 @@
-//     #include <string>
-//     #include <variant>
-//     #include <any>
-//     
-//     using namespace std;
-//     
-//     namespace perso {
-//     
-//     class error_t {
-//     protected:
-//         any type_;
-//     public:
-//         template<class T>
-//         error_t(T t): type_(t) {}
-// 
-//         auto type() const {
-//             return type_;
-//         }
-//     };
-//     
-// /*
-//     template<class T>
-//     auto print_type() {
-//         return "...";
-//     }
-// */
-//     
-//     auto to_string(error_t e) {
-//         return string{"Error: "} + print_type(e.type());
-//     }
-//     
-//     class success_t { /* ... */ };
-//     
-//     // the variant I would like to use
-//     using output_t = variant<success_t, error_t>;
-//     
-//     // minimal working example
-//     output_t compute(bool b) {
-//         if (b) {
-//             return success_t{};
-//         } else {
-//             using complex_hierarchy_of_type = int;
-//             auto out = error_t(complex_hierarchy_of_type{});
-//             return out;
-//         }
-//     }
-//     
-//     string compute_and_analyse() {
-//         auto out = compute(false);
-//         // I prefer to use std::visit(overloaded{lambdas...}, out), but this code is disturbing
-//         if (auto* error = get_if<error_t>(&out); error) {
-//             return to_string(*error);
-//         } else {
-//             return "success";
-//         }
-//     }
-//     
-//     }; // namespace perso
-// 
-// int main() {
-//     cout<< perso::compute_and_analyse() << endl;
-// }
-
 #include <iostream> // TODO fmt
 #include <string>
 #include <array>
@@ -297,15 +234,11 @@ auto operator&& (output_t o1, output_t o2) {
 
 auto operator|| (output_t o1, output_t o2) {
     return visit(overloaded {
-//         [](success_t s, output_t) { // fixme
-        [](error_t s, output_t) {
+        [](success_t s, output_t) {
             return output_t{s};
         },
-        [](error_t, success_t s) {
-            return output_t{s};
-        },
-        [](error_t e1, error_t e2) {
-            return output_t{e1}; // currently, we only return the first error
+        [](error_t e, output_t o) {
+            return output_t{o};
         },
     }, o1, o2);
 }
@@ -338,9 +271,11 @@ constexpr output_t compute(R<str>) {
 };
 
 string to_string(output_t o) {
+    using utility::to_string;
+
     return visit(overloaded {
         [](error_t e) {
-            return string{"Invalid token: "} + utility::to_string(e);
+            return to_string(e);
         },
         [](success_t s) {
             return string{s};
@@ -430,26 +365,44 @@ int main(int argc, char *argv[])
 
     const auto input = test_me;
 
-auto x = output_t{success_t("xx")};
-auto y = output_t{grammar::error_t(0)};
-string a = "srtnr";
-    cout << to_string(a) << endl;
-    cout << to_string(x) << endl;
-    cout << to_string(y) << endl;
+    const auto x = output_t{success_t("xx")};
+    class yy{};
+    const auto y = output_t{grammar::error_t(yy{})};
+    cout << "x: " << to_string(x) << endl;
+    cout << "y: " << to_string(y) << endl;
+    const auto x_and_y = x && y;
+    cout << "x && y: " << to_string(x_and_y) << endl;
+    const auto y_and_x = y && x;
+    cout << "y && x: " << to_string(y_and_x) << endl;
+    const auto x_or_y = x || y;
+    cout << "x || y: " << to_string(x_or_y) << endl;
+    const auto y_or_x = y || x;
+    cout << "y || x: " << to_string(y_or_x) << endl;
 
-    auto aa = compute(A{});
+    class ww{};
+    const auto v = output_t{success_t("vv")};
+    const auto w = output_t{grammar::error_t(ww{})};
+    cout << "x && v: " << to_string(x && v) << endl;
+    cout << "v && x: " << to_string(v && x) << endl;
+    cout << "x && v && y && w: " << to_string(x && v && y && w) << endl;
+    cout << "x || v: " << to_string(x || v) << endl;
+    cout << "v || x: " << to_string(v || x) << endl;
+    cout << "y || w || x || v: " << to_string(y || w || x || v) << endl;
+
+    const auto aa = compute(A{});
     cout << "a: " << to_string(aa) << endl;
-    auto allof = compute(AB{});
+    const auto allof = compute(AB{});
     cout << "ab: " << to_string(allof) << endl;
-    auto oneof = compute(CD{});
+    const auto oneof = compute(CD{});
     cout << "c|d: " << to_string(oneof) << endl;
 
-    // auto grammar_ = MathOperation{};
-    // const auto computed_statements = compute(grammar_);
-    // visit(overloaded {
-    //     [&out](grammar::success_t s) { out << s << endl; },
-    //     [&err](grammar::error_t e) { err << print_type(e) << endl; }
-    // }, computed_statements);
+    const auto grammar_ = MathOperation{};
+    const auto computed_statements = compute(grammar_);
+    cout << "grammar: " << to_string(computed_statements) << endl;
+    visit(overloaded {
+        [&out](grammar::success_t s) { out << "Success: " << grammar::to_string(s) << endl; },
+        [&err](grammar::error_t e) { err << "Failure: " << grammar::to_string(e) << endl; }
+    }, computed_statements);
 
     return 0;
 }
