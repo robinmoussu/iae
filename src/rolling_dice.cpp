@@ -73,7 +73,7 @@ namespace diceparser2 {
 
 auto x = R"---(
 
-Grammar = (Expression ";")* Expression? Comment? Output
+Grammar = (Expression ";")* Expression? Output
 
 Output =
     | "\"" (OutputStr ComputedValue?)+ "\""
@@ -89,10 +89,12 @@ GetResult = "$" FullExpression
 GetDices = "%" FullExpression
 
 FullExpression = "{" Expression "}"
-Expression = Roll Operator+
+Expression = Comment? Roll Operator+
 
-Comment = ";?#" CommentStr
-CommentStr = ".*"
+Comment = "`" CommentStr* "`"
+CommentStr =
+    | "[^`]*"
+    | "\`"
 
 Quantity =
     | PreviousResults
