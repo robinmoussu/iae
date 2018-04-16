@@ -2,3 +2,5 @@
 *.o.d
 /bin/
 *.sw*
+builddir
+bin
