@@ -15,46 +15,29 @@ namespace iae::grammar {
 // Note: Complete grammar isn't implemented currently
 
 inline const char number[] = "\\d+";
-// TODO: struct Quantity: OneOf< PreviousResults, R<number> > {};
-struct Quantity: OneOf< R<number> > {};
+// TODO: auto Quantity = PreviousResults || Token<number>{};
+constexpr auto Quantity = Token<number>{};
 
 inline const char divide_round[] = "/~";
 inline const char divide_ceil[]  = "/\\+";
 inline const char divide_floor[] = "/\\-";
 inline const char divide_real[]  = "/";
-struct DivideRound: AllOf< R<divide_round>, Quantity > {};
-struct DivideCeil:  AllOf< R<divide_ceil>,  Quantity > {};
-struct DivideFloor: AllOf< R<divide_floor>, Quantity > {};
-struct DivideReal:  AllOf< R<divide_real>,  Quantity > {};
+constexpr auto DivideRound = Token<divide_round>{} && Quantity;
+constexpr auto DivideCeil  = Token<divide_ceil>{}  && Quantity;
+constexpr auto DivideFloor = Token<divide_floor>{} && Quantity;
+constexpr auto DivideReal  = Token<divide_real>{}  && Quantity;
 
 inline const char plus[] = "\\+";
 inline const char minus[] = "-";
 inline const char multiply[] = "[*×]";
 inline const char modulo[] = "!";
-struct Plus:     AllOf< R<plus>,     Quantity > {};
-struct Minus:    AllOf< R<minus>,    Quantity > {};
-struct Multiply: AllOf< R<multiply>, Quantity > {};
-struct Modulo:   AllOf< R<modulo>,   Quantity > {};
-struct Divide:
-    OneOf<
-        DivideRound,
-        DivideCeil,
-        DivideFloor,
-        DivideReal
-    > {};
+constexpr auto Plus     = Token<plus>{}     && Quantity;
+constexpr auto Minus    = Token<minus>{}    && Quantity;
+constexpr auto Multiply = Token<multiply>{} && Quantity;
+constexpr auto Modulo   = Token<modulo>{}   && Quantity;
+constexpr auto Divide   = DivideRound || DivideCeil || DivideFloor || DivideReal;
 
-struct ArithmeticOperator:
-    OneOf<
-        Plus,
-        Minus,
-        Divide,
-        Multiply,
-        Modulo
-    > {};
-struct MathOperation:
-    OneOf<
-        ArithmeticOperator,
-        Quantity
-    > {};
+constexpr auto ArithmeticOperator = Plus || Minus || Divide || Multiply || Modulo;
+constexpr auto MathOperation = ArithmeticOperator || Quantity;
 
 }; // namespace iae::grammar

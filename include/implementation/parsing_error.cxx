@@ -5,7 +5,7 @@
 namespace iae::grammar {
 
 template <class T>
-ParseError ParseError::create()
+constexpr ParseError ParseError::create()
 {
     return ParseError(&ErrorInfo<T>::instance_v);
 }
@@ -16,7 +16,7 @@ std::string ParseError::ErrorInfo<T>::to_string() const {
 }
 
 template<class T>
-ParseError::ErrorInfo<T>::~ErrorInfo() {}
+ParseError::ErrorInfo<T>::~ErrorInfo() = default;
 
 template<class T>
 const ParseError::ErrorInfo<T> ParseError::ErrorInfo<T>::instance_v;

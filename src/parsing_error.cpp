@@ -19,6 +19,6 @@ string ParseError::to_string() const {
     return error_info->to_string();
 }
 
-ParseError::ErrorInfoBase::~ErrorInfoBase() {}
+ParseError::ErrorInfoBase::~ErrorInfoBase() = default;
 
 }; // namespace iae::grammar

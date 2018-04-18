@@ -15,7 +15,7 @@ public:
     ParseError(const ParseError&) = default;
 
     template <class T>
-    static ParseError create();
+    constexpr static ParseError create();
 
     std::string to_string() const;
 
