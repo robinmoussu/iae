@@ -74,7 +74,8 @@ void unit_test()
     cout << "(A && B) || (C && Invalid && D): " << to_string(compute((A && B) || (C && Invalid && D))) << endl;
     cout << "(A && B && Invalid) || (C && D): " << to_string(compute((A && B && Invalid) || (C && D))) << endl;
 
-    const auto grammar_ = MathOperation;
+    const auto grammar_ = MathOperation{};
+    cout << "grammar: " << print_type<MathOperation>();
     const auto computed_statements = compute(grammar_);
     cout << "grammar: " << to_string(computed_statements) << endl;
     visit(overloaded {

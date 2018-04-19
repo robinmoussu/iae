@@ -3,6 +3,7 @@
 #include "utility.h"
 #include "parsing_error.h"
 
+#include <limits>
 #include <string>
 #include <variant>
 
@@ -17,37 +18,105 @@ template<class ...Tokens>
 struct AllOf {};
 
 template<class ...Tokens>
-output_t compute(AllOf<Tokens...>);
+inline output_t compute(AllOf<Tokens...>);
 
 /** Return the first matching token */
 template<class ...Tokens>
 struct FirstOf {};
 
 template<class ...Tokens>
-output_t compute(FirstOf<Tokens...>);
+inline output_t compute(FirstOf<Tokens...>);
 
-/** Basic token, must match the regex str */
+/** Return between Min and Max Tokens */
+template<unsigned Min, unsigned Max, class Token>
+struct Match {
+    // Specialisation to allow template deduction guides
+    Match() = default;
+    template<class T>
+    constexpr Match(const T&): Match() {}
+    template<class T>
+    constexpr Match(T&&): Match() {}
+};
+constexpr int match_any = std::numeric_limits<unsigned>::max();
+
+template<unsigned Min, unsigned Max, class Token>
+inline output_t compute(Match<Min,Max,Token>);
+
+template<class Token>
+struct AnyOf: Match<0, match_any, Token> {
+    // Specialisation to allow template deduction guides
+    AnyOf() = default;
+    template<class T>
+    constexpr AnyOf(const T&): AnyOf() {}
+    template<class T>
+    constexpr AnyOf(T&&): AnyOf() {}
+};
+
+template<class Token, class Separator>
+struct Many: AllOf< AnyOf< AllOf< Token, Separator >>, Token > {
+    // Specialisation to allow template deduction guides
+    Many() = default;
+    template<class T>
+    constexpr Many(const T&): Many() {}
+    template<class T>
+    constexpr Many(T&&): Many() {}
+};
+
+template<class Token>
+struct MultipleOf: Match<1, match_any, Token> {
+    // Specialisation to allow template deduction guides
+    MultipleOf() = default;
+    template<class T>
+    constexpr MultipleOf(const T&): MultipleOf() {}
+    template<class T>
+    constexpr MultipleOf(T&&): MultipleOf() {}
+};
+
+/** When you need to have loop in your grammar */
+template<class Token>
+struct Reference {};
+
+template<class Token>
+inline output_t compute(Reference<Token>);
+
+template<class Token>
+struct Maybe: Match<0, 1, Token> {
+    // Specialisation to allow template deduction guides
+    Maybe() = default;
+    template<class T>
+    constexpr Maybe(const T&): Maybe() {}
+    template<class T>
+    constexpr Maybe(T&&): Maybe() {}
+};
+
+/** Basic token, must match the regex `str`
+ *
+ * \FIXME When c++20 will be advailable, use user defined literals to reduce
+ * bolerblate (example: `constexpr auto a_or_b = "a"_t || "b"_t`)
+ * \see [Class Types in Non-Type Template Parameters](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0732r1.pdf))
+ */
 template<const char* str>
 struct Token {};
 
 template<const char* str>
-output_t compute(Token<str>);
+inline output_t compute(Token<str>);
 
 /** Token always return false when computed. For testing purpose */
 struct ErrorToken {};
 
-output_t compute(ErrorToken);
+inline output_t compute(ErrorToken);
 
-output_t operator&& (output_t o1, output_t o2);
-output_t operator|| (output_t o1, output_t o2);
+inline output_t operator+ (output_t o1, output_t o2);
+inline output_t operator&& (output_t o1, output_t o2);
+inline output_t operator|| (output_t o1, output_t o2);
 
 /** Concatenation with natural syntax **/
 template<class Token1, class Token2>
-constexpr auto operator&&(Token1, Token2);
+inline constexpr auto operator&&(Token1, Token2);
 
 /** Union with natural syntax **/
 template<class Token1, class Token2>
-constexpr auto operator||(Token1, Token2);
+inline constexpr auto operator||(Token1, Token2);
 
 /** Pretty print the output */
 std::string to_string(output_t o);
