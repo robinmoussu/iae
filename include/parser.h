@@ -30,12 +30,8 @@ inline output_t compute(FirstOf<Tokens...>);
 /** Return between Min and Max Tokens */
 template<unsigned Min, unsigned Max, class Token>
 struct Match {
-    // Specialisation to allow template deduction guides
     Match() = default;
-    template<class T>
-    constexpr Match(const T&): Match() {}
-    template<class T>
-    constexpr Match(T&&): Match() {}
+    constexpr Match<Min, Max,Token>(Token&&): Match() {}
 };
 constexpr unsigned match_any = std::numeric_limits<unsigned>::max();
 
@@ -44,32 +40,23 @@ inline output_t compute(Match<Min,Max,Token>);
 
 template<class Token>
 struct AnyOf: Match<0, match_any, Token> {
-    // Specialisation to allow template deduction guides
     AnyOf() = default;
     template<class T>
-    constexpr AnyOf(const T&): AnyOf() {}
-    template<class T>
-    constexpr AnyOf(T&&): AnyOf() {}
+    constexpr AnyOf(T): AnyOf() {}
 };
 
 template<class Token, class Separator>
 struct Many: AllOf< AnyOf< AllOf< Token, Separator >>, Token > {
-    // Specialisation to allow template deduction guides
     Many() = default;
     template<class T>
-    constexpr Many(const T&): Many() {}
-    template<class T>
-    constexpr Many(T&&): Many() {}
+    constexpr Many(T): Many() {}
 };
 
 template<class Token>
 struct MultipleOf: Match<1, match_any, Token> {
-    // Specialisation to allow template deduction guides
     MultipleOf() = default;
     template<class T>
-    constexpr MultipleOf(const T&): MultipleOf() {}
-    template<class T>
-    constexpr MultipleOf(T&&): MultipleOf() {}
+    constexpr MultipleOf(T): MultipleOf() {}
 };
 
 /** When you need to have loop in your grammar */
@@ -81,12 +68,9 @@ inline output_t compute(Reference<Token>);
 
 template<class Token>
 struct Maybe: Match<0, 1, Token> {
-    // Specialisation to allow template deduction guides
     Maybe() = default;
     template<class T>
-    constexpr Maybe(const T&): Maybe() {}
-    template<class T>
-    constexpr Maybe(T&&): Maybe() {}
+    constexpr Maybe(T): Maybe() {}
 };
 
 /** Basic token, must match the regex `str`
