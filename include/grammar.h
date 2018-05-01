@@ -80,7 +80,7 @@ inline const char cond_open_[] = "\\[";
 inline const char cond_close_[] = "\\]";
 struct Condition: FirstOf< AllOf< Token<cond_open_>, AnyOf< ListOperator >, RelationalOperator, Token<cond_close_> >, Quantity > {};
 
-class FullExpression;
+struct FullExpression;
 struct ElseInstruction: FirstOf<Reference<FullExpression>> {};
 struct ElseIfInstruction: AllOf< Condition, Reference<FullExpression> > {};
 struct TrueInstruction: FirstOf<Reference<FullExpression>> {};

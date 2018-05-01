@@ -37,7 +37,7 @@ struct Match {
     template<class T>
     constexpr Match(T&&): Match() {}
 };
-constexpr int match_any = std::numeric_limits<unsigned>::max();
+constexpr unsigned match_any = std::numeric_limits<unsigned>::max();
 
 template<unsigned Min, unsigned Max, class Token>
 inline output_t compute(Match<Min,Max,Token>);

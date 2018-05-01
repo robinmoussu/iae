@@ -80,9 +80,6 @@ inline output_t compute(Match<0, 0, Token>) {
     }, compute(Token{}));
 };
 
-template<unsigned Min, unsigned Max, class Token>
-Match(Token) -> Match<Min, Max, Token>;
-
 template<class Token>
 AnyOf(Token) -> AnyOf<Token>;
 
